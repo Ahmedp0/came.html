@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فتح الكاميرا</title>
+</head>
+<body>
+    <h1>اضغط على الزر لفتح الكاميرا</h1>
+    <a href="#" onclick="openCamera()" style="font-size: 20px; color: blue; text-decoration: underline;">فتح الكاميرا</a>
+
+    <script>
+        function openCamera() {
+            // إنشاء عنصر فيديو للوصول إلى الكاميرا
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then((stream) => {
+                    const video = document.createElement('video');
+                    video.srcObject = stream;
+                    video.autoplay = true;
+                    video.style.width = '100%';
+                    video.style.height = 'auto';
+                    document.body.appendChild(video);
+                })
+                .catch((err) => {
+                    alert("حدث خطأ أثناء الوصول إلى الكاميرا: " + err.message);
+                });
+        }
+    </script>
+</body>
+</html>

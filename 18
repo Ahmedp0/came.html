@@ -1,1 +1,68 @@
+using System;
+using System.Data.SqlClient;
+
+public class Program
+{
+//طريقة ربط الداتا بيس مع السي شارب 
+   // static string connectionString = "Server=.;Database=ContactsDB;User Id=as;password=123456";
+   // static string connectionString = "Server=.;Database=ContactsDB;User Id=as;Password=123456;";
+    static string connectionString = "Server=.;Database=ContactsDB;Integrated Security=True;";
+
+
+    static void PrintAllContacts()
+    {
+        SqlConnection connection = new SqlConnection(connectionString);
+
+        string query = "select * from Contacts";
+
+        SqlCommand command=new SqlCommand(query, connection);
+
+        try
+        {
+            connection.Open();
+            SqlDataReader reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+
+                int contactID = (int)reader["ContactID"];
+                string FirstName = (string)reader["FirstName"];
+                string LastName = (string)reader["LastName"];
+                string Email = (string)reader["Email"];
+                string Phone = (string)reader["Phone"];
+                string Address = (string)reader["Address"];
+                int CountryID = (int)reader["CountryID"];
+
+
+                Console.WriteLine("Contact ID: " + contactID);
+                Console.WriteLine("First Name: " + FirstName);
+                Console.WriteLine("Last Name: " + LastName);
+                Console.WriteLine("Email: " + Email);
+                Console.WriteLine("Phone: " + Phone);
+                Console.WriteLine("Address: " + Address);
+                Console.WriteLine("Country ID: " + CountryID);
+
+                Console.WriteLine();
+
+            }
+            reader.Close();
+            connection.Close();
+        }
+        catch (Exception ex) { 
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    static void Main(string[] args)
+    {
+
+        PrintAllContacts();
+
+
+
+
+
+    }
+
+}
+
 

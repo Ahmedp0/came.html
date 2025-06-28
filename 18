@@ -115,4 +115,568 @@ public class Program
         PrintAllContacts();
     }
 }
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+مشروع البذره ب 3 طبقات 
+using System;
+using System.Data;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using ContactBusinessLayer;
+
+namespace Console_presentation
+{
+    internal class Program
+    {
+        static void TestFindContact(int ID)
+        {
+
+
+            clsContact contact = clsContact.Find(ID);
+            if (contact != null)
+            {
+                Console.WriteLine(contact.FirstName + " " + contact.LastName);
+                Console.WriteLine(contact.Email);
+                Console.WriteLine(contact.Phone);
+                Console.WriteLine(contact.Address);
+                Console.WriteLine(contact.CountryID);
+            }
+            else
+            {
+                Console.WriteLine("contact[" + ID + "] not found");
+            }
+
+
+        }
+        static void TestAddNewContact()
+        {
+
+            clsContact contact1 = new clsContact();
+            contact1.FirstName = "ahmed";
+            contact1.LastName = "talib";
+            contact1.Email = "@ahmed";
+            contact1.Phone = "1234";
+            contact1.Address = "najaf";
+            contact1.CountryID = 1;
+
+            if (contact1.Save())
+            {
+                Console.WriteLine("save is ok");
+
+            }
+            else
+            {
+                Console.WriteLine("save no");
+            }
+        }
+        static void TestUpdateContact(int ID)
+        {
+            clsContact contact2 = clsContact.Find(ID);
+
+            if (contact2 != null)
+            {
+
+               
+                contact2.FirstName = "zahra";
+                contact2.LastName = "talib";
+                contact2.Email = "@ahmed";
+                contact2.Phone = "1234";
+                contact2.Address = "najaf";
+                contact2.CountryID = 1;
+
+                if (contact2.Save()) { 
+
+                    Console.WriteLine("save is ok");
+
+                }
+                else
+                {
+                    Console.WriteLine("save no");
+                }
+
+            }
+            else {
+                Console.WriteLine("contact[" + ID + "] not found");
+            }
+        }
+
+        static void TestDeleteContact(int ID)
+        {
+            if (clsContact.DeleteContact(ID))
+            {
+                Console.WriteLine("deleted["+ID+"] is ok");
+            }
+            else
+            {
+                Console.WriteLine("deleted [" + ID + "] failed or not found");
+
+            }
+
+
+        }
+
+        static void GetAllContact() { 
+        
+            DataTable dt = clsContact.GetContact();
+
+            foreach (DataRow row in dt.Rows)
+            {
+                Console.WriteLine($"{row["ContactID"],-5} {row["FirstName"],-15} {row["LastName"],-15} {row["Email"],-30} " +
+                    $"{row["Phone"],-15} {row["Address"],-20} {row["CountryID"],-10}");
+            }
+
+
+
+
+        }
+
+        static void IsContactExist(int ID)
+        {
+           if(clsContact.IsExistContact(ID))
+           {
+                Console.WriteLine("the contact is there");
+           }
+           else
+           {
+                Console.WriteLine("the contact is not there");
+           }
+        }
+        static void Main(string[] args)
+        {
+            // TestFindContact(1);
+            // TestAddNewContact();
+            // TestUpdateContact(1);
+            // TestDeleteContact(1);
+            // GetAllContact();
+            IsContactExist(2);
+        }
+    }
+}
+
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Net;
+using System.Security.Policy;
+using System.Text;
+using System.Threading.Tasks;
+using ContactDataAccessLayer;
+
+
+namespace ContactBusinessLayer
+{
+    public class clsContact
+    {
+
+       
+        public enum enMode { AddNew = 0, Update = 1 };
+        public enMode Mode = enMode.AddNew;
+
+        public int ID { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public string Email { get; set; }
+        public string Phone { get; set; }
+        public string Address { get; set; }
+        public int CountryID { get; set; }
+
+        public  clsContact()
+        {
+
+            this.ID = -1;
+            this.FirstName ="";
+            this.LastName = "";
+            this.Email = "";
+            this.Phone = "";
+            this.Address = "";
+            this.CountryID = -1;
+
+            Mode = enMode.AddNew;
+
+        }
+        private clsContact(int ID, string firstName, string lastName, string email, string phone, string address, int countryID)
+        {
+
+          this.ID = ID;
+          this.FirstName = firstName;
+          this.LastName = lastName;
+          this.Email = email;
+          this.Phone = phone;
+          this.Address = address;
+          this.CountryID = countryID;
+
+            Mode = enMode.Update;
+        }
+        
+        private bool _AddNewContact()
+        {
+            this.ID = clsContactDataAccess.AddNewContact(this.FirstName, this.LastName, this.Email, this.Phone, this.Address, this.CountryID);
+
+                return (this.ID != -1);
+
+        }
+
+        private bool _UpdateContact() {
+
+            return clsContactDataAccess.UpdateContact(this.ID, this.FirstName, this.LastName, this.Email, this.Phone, this.Address, this.CountryID);
+      
+        }
+
+        public static clsContact Find(int ID) {
+
+            string FirstName = "",
+            LastName = "",
+            Email = "",
+            Phone = "",
+            Address = "";
+            int CountryID =-1;
+
+            if (clsContactDataAccess.GetContactInfoByID(ID, ref FirstName, ref LastName, ref Email, ref Phone, ref Address, ref CountryID))
+            {
+                return new clsContact(ID, FirstName, LastName, Email, Phone, Address, CountryID);
+            }
+            else { 
+
+                return null;
+            }
+
+        }
+
+        public bool Save()
+        {
+
+            switch (Mode)
+            {
+
+                case enMode.AddNew:
+                    if (_AddNewContact())
+                    {
+                        Mode = enMode.Update;
+
+                        return true;
+
+                    }
+                    else
+                    {
+
+                        return false;
+                    }
+
+                case enMode.Update:
+
+                    return _UpdateContact();
+
+                
+            }
+
+            return false;
+               
+        }
+        public static bool DeleteContact(int ID)
+        {
+
+            return clsContactDataAccess.DeleteContact(ID);
+
+
+        }
+
+        public static DataTable GetContact() { 
+
+            return clsContactDataAccess.GetContacts();
+
+
+
+        }
+
+        public static bool IsExistContact(int ID)
+        {
+            return clsContactDataAccess.IsExistContact(ID);
+        }
+    }
+}
+using System;
+using System.Data.SqlClient;
+using ContactDataSitting;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Security.Policy;
+using System.Text;
+using System.Threading.Tasks;
+using System.Diagnostics.Contracts;
+using System.Data;
+namespace ContactDataAccessLayer
+{
+    public class clsContactDataAccess
+    {
+
+
+        public static bool GetContactInfoByID(int ID,ref string FirstName, ref string LastName,
+            ref string Email, ref string Phone, ref string Address, ref int CountryID)
+        {
+
+            bool isFound=false; 
+            SqlConnection connection=new SqlConnection(clsDataSitting.connectionString);
+
+            string query = "select * from Contacts where ContactID=@ContactID";
+
+            SqlCommand command = new SqlCommand(query, connection);
+
+            command.Parameters.AddWithValue("@ContactID", ID);
+
+            try
+            {
+                connection.Open();
+                SqlDataReader reader = command.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    isFound = true;
+
+                    FirstName = (string)reader["FirstName"];
+                    LastName = (string)reader["LastName"];
+                    Email = (string)reader["Email"];
+                    Phone = (string)reader["Phone"];
+                    Address = (string)reader["Address"];
+                    CountryID = (int)reader["CountryID"];
+
+                    reader.Close();
+
+                }
+                else
+                {
+                    isFound = false;
+                    reader.Close();
+                }
+            }
+            catch (Exception ex) {
+
+                isFound = false;
+
+            }
+            finally
+            {
+                
+                connection.Close();
+               
+            }
+
+
+            return isFound;
+        }
+
+        public static int AddNewContact( string FirstName, string LastName, string Email, string Phone, string Address, int CountryID)
+
+
+        {
+            int ContactID = -1;
+            SqlConnection connection = new SqlConnection(clsDataSitting.connectionString);
+
+            string query = @"INSERT INTO Contacts (FirstName,LastName,Email,Phone,Address,CountryID) 
+                     VALUES (@FirstName,@LastName,@Email,@Phone,@Address,@CountryID);
+                     SELECT SCOPE_IDENTITY();";
+
+            SqlCommand command = new SqlCommand(query, connection);
+
+            command.Parameters.AddWithValue("@FirstName", FirstName);
+            command.Parameters.AddWithValue("@LastName", LastName);
+            command.Parameters.AddWithValue("@Email", Email);
+            command.Parameters.AddWithValue("@Phone", Phone);
+            command.Parameters.AddWithValue("@Address", Address);
+            command.Parameters.AddWithValue("@CountryID", CountryID);
+
+            try
+            {
+                connection.Open();
+                object result = command.ExecuteScalar();
+                if (result != null && int.TryParse(result.ToString(), out int insertedID))
+                {
+
+                    ContactID = insertedID;
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+              
+            }
+            finally { 
+                
+            connection.Close();
+            }
+
+            return ContactID;
+
+        }
+
+        public static bool UpdateContact(int ID, string FirstName, string LastName, string Email, string Phone, string Address, int CountryID)
+        {
+            int rowsAffected = 0;
+
+            SqlConnection connection = new SqlConnection(clsDataSitting.connectionString);
+
+            string query = @"UPDATE Contacts
+                                          SET FirstName = @FirstName,
+                                              LastName = @LastName, 
+                                              Email = @Email,
+                                              Phone = @Phone,
+                                              Address = @Address,
+                                              CountryID = @CountryID WHERE   
+                                              ContactID = @ContactID;";
+
+
+            SqlCommand command = new SqlCommand(query, connection);
+            command.Parameters.AddWithValue("@ContactID", ID);
+            command.Parameters.AddWithValue("@FirstName", FirstName);
+            command.Parameters.AddWithValue("@LastName", LastName);
+            command.Parameters.AddWithValue("@Email", Email);
+            command.Parameters.AddWithValue("@Phone", Phone);
+            command.Parameters.AddWithValue("@Address", Address);
+            command.Parameters.AddWithValue("@CountryID", CountryID);
+            
+
+            try
+            {
+                connection.Open();
+                rowsAffected = command.ExecuteNonQuery();
+
+            }
+            catch (Exception ex)
+            {
+               return false;
+            }
+            finally
+            {
+
+                connection.Close();
+            }
+
+            return (rowsAffected > 0);
+        }
+
+        public static bool DeleteContact(int ID) {
+
+            int rowsAffected = 0;
+
+            SqlConnection connection = new SqlConnection(clsDataSitting.connectionString);
+
+            string query = @"DELETE FROM Contacts WHERE ContactID=@ContactID";
+
+            SqlCommand command = new SqlCommand(query, connection);
+
+            command.Parameters.AddWithValue("@ContactID", ID);
+            try
+            {
+                connection.Open();
+                rowsAffected = command.ExecuteNonQuery();
+
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                connection.Close();
+            }
+
+            return (rowsAffected > 0);  
+        }
+
+
+        public static DataTable GetContacts() { 
+        
+            DataTable datatable = new DataTable();
+            SqlConnection connection = new SqlConnection(clsDataSitting.connectionString);
+
+            string query = "select * from contacts";
+
+            SqlCommand command = new SqlCommand(query, connection);
+
+            try
+            {
+                connection.Open();
+                SqlDataReader reader = command.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    datatable.Load(reader);
+
+                }
+                reader.Close();
+            }
+            catch
+            {
+
+            }
+            finally { 
+            connection.Close();
+            }
+            return datatable;   
+        }
+        public static bool IsExistContact(int ID) {
+
+
+
+            bool isFound = false;
+            SqlConnection connection = new SqlConnection(clsDataSitting.connectionString);
+
+            string query = "select 1 from Contacts where ContactID=@ContactID";
+
+            SqlCommand command = new SqlCommand(query, connection);
+
+            command.Parameters.AddWithValue("@ContactID", ID);
+
+            try
+            {
+                connection.Open();
+                SqlDataReader reader = command.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    isFound = true;
+
+                   
+
+                    reader.Close();
+
+                }
+                else
+                {
+                    isFound = false;
+                    reader.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+
+                isFound = false;
+
+            }
+            finally
+            {
+
+                connection.Close();
+
+            }
+            return isFound;
+        }
+    }
+}
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace ContactDataSitting
+{
+    internal class clsDataSitting
+    {
+       static public string connectionString = "Server=.;Database=ContactsDB;Integrated Security=True";
+    }
+}
 
